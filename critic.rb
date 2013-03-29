@@ -32,9 +32,8 @@ class Critic
     RestaurantReview.avg_by_critic(id).first['average']
   end
 
-  def unreviews_restaurants
-    
+  def unreviewed
+    RestaurantReview.find_by_unreviewed(id)
   end
-  
   
 end

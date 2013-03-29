@@ -1,4 +1,5 @@
 require_relative 'database_connection'
+require_relative 'restaurant'
 
 class RestaurantReview
   def self.find(id)
@@ -29,12 +30,36 @@ class RestaurantReview
     end
   end
 
-  def self.find_by_score(score)
+  def self.find_by_chef(chef_id)
+    query = <<-SQL
+    SELECT r.*
+    FROM restaurant_reviews r 
+    JOIN chef_tenures c
+    ON r.restaurant_id = c.restaurant_id
+    WHERE r.review_date BETWEEN c.start_date AND c.end_date 
+    AND c.chef_id = ?
+    SQL
     
+    RestaurantsReviewsDB.instance.execute(query, chef_id).map do |review_hash|
+       RestaurantReview.new(review_hash)
+    end
   end
 
-  def self.find_by_date(date)
-    
+  def self.find_by_unreviewed(critic_id)
+    query = <<-SQL
+    SELECT * 
+    FROM restaurants
+    WHERE id NOT IN ( 
+      SELECT r.id
+      FROM restaurants r
+      JOIN restaurant_reviews rev 
+      ON r.id = rev.restaurant_id
+      WHERE rev.critic_id = ? )
+    SQL
+
+    RestaurantsReviewsDB.instance.execute(query, critic_id).map do |restaurant_hash|
+      Restaurant.new(restaurant_hash)
+    end
   end
 
   def self.avg_by_critic(critic_id)
@@ -65,8 +90,7 @@ class RestaurantReview
     @restaurant_id = options['restaurant_id'] 
     @review = options['review'] 
     @score = options['score'] 
-    @date_time = options['date_time']
+    @review_date = options['review_date']
   end
-  
   
 end

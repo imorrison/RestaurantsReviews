@@ -1,5 +1,6 @@
 require_relative 'database_connection'
 require_relative 'chef_tenure'
+require_relative 'restaurant_review'
 
 class Chef
   def self.find(id)
@@ -28,6 +29,16 @@ class Chef
     end
   end
 
+  def self.num_proteges(mentor_id)
+    query = <<-SQL
+    SELECT COUNT(id)
+    FROM chefs
+    WHERE mentor = ?
+    SQL
+
+    RestaurantsReviewsDB.instance.execute(query, mentor_id).first
+  end
+
   attr_reader :id
   attr_accessor :first_name, :last_name, :mentor
   def initialize(options = {})
@@ -41,12 +52,16 @@ class Chef
     Chef.find_by_mentor(id) 
   end
 
+  def num_proteges
+    Chef.num_proteges(id).values
+  end
+
   def co_workers
     ChefTenure.find_co_workers(id)
   end
 
   def reviews
-    # 8
+    RestaurantReview.find_by_chef(id)
   end
   
   
