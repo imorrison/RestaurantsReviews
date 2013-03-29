@@ -32,6 +32,35 @@ class Restaurant
     
   end
 
+  def self.top_restaurants(n)
+    query = <<-SQL
+    SELECT r.*, AVG(rev.score) avg
+    FROM restaurants r LEFT OUTER JOIN restaurant_reviews rev 
+    ON (r.id = rev.restaurant_id )
+    GROUP BY r.id
+    ORDER BY avg DESC
+    LIMIT ?
+    SQL
+    
+    RestaurantsReviewsDB.instance.execute(query, n).map do |restaurant_hash|
+       Restaurant.new(restaurant_hash)
+    end
+  end
+
+  def self.highly_reviewed_restaurants(min_reviews)
+    query = <<-SQL
+    SELECT r.*
+    FROM restaurants r LEFT OUTER JOIN restaurant_reviews rev 
+    ON ( r.id = rev.restaurant_id )
+    GROUP BY r.id
+    HAVING COUNT(rev.id) >= ?
+    SQL
+    
+    RestaurantsReviewsDB.instance.execute(query, min_reviews).map do |restaurant_hash|
+       Restaurant.new(restaurant_hash)
+    end
+  end
+
   attr_reader :id
   attr_accessor :name, :neighborhood, :cuisine
   def initialize(options = {})
